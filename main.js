@@ -1,51 +1,180 @@
+// AXIOS GLOBALS
+axios.defaults.headers.common['X-Auth-Token'] = "sometoken";
+
 // GET REQUEST
 function getTodos() {
-  console.log('GET Request');
+  // correct url: https://jsonplaceholder.typicode.com/todos
+  axios({
+    method: "get",
+    url: "https://jsonplaceholder.typicode.com/todos",
+    params: {
+      _limit: 5
+    }
+  })
+  /*
+  axios
+    .get("https://jsonplaceholder.typicode.com/todos", { params: { _limit: 5 }})
+  */
+    .then((res) => { showOutput(res) })
+    .catch((err) => { console.log(err) });
 }
 
 // POST REQUEST
 function addTodo() {
-  console.log('POST Request');
+  /*
+  axios({
+    method: "post",
+    url: "https://jsonplaceholder.typicode.com/todos",
+    data: {
+      title: "New added Todo",
+      completed: false
+    }
+  })
+  */
+  axios
+    .post("https://jsonplaceholder.typicode.com/todos", {
+      title: "New added Todo",
+      completed: false
+    })
+    .then((res) => { showOutput(res) })
+    .catch((err) => { console.log(err) });
 }
 
 // PUT/PATCH REQUEST
+// Put method replaces where as patch method updates given data
+
+// Note: for both put and patch; id of post is required in url.
 function updateTodo() {
-  console.log('PUT/PATCH Request');
+  /*
+  axios
+    .put("https://jsonplaceholder.typicode.com/todos/1", {
+      title: "Updated Todo",
+      completed: true
+    })
+  */
+  axios
+    .patch("https://jsonplaceholder.typicode.com/todos/2", {
+      title: "Updated Todo",
+      completed: true
+    })
+    .then((res) => { showOutput(res) })
+    .catch((err) => { console.log(err) });
 }
 
 // DELETE REQUEST
+// Note: delete need id of post to be deleted in url.
 function removeTodo() {
-  console.log('DELETE Request');
+  axios
+    .delete("https://jsonplaceholder.typicode.com/todos/3")
+    .then((res) => { showOutput(res) })
+    .catch((err) => { console.log(err) });
 }
 
 // SIMULTANEOUS DATA
 function getData() {
-  console.log('Simultaneous Request');
+  axios.all([
+    axios.get("https://jsonplaceholder.typicode.com/todos", {params: {_limit: 7}}),
+    axios.get("https://jsonplaceholder.typicode.com/posts", {params: {_limit: 5}})
+  ])
+    /*
+    .then((res) => {
+      console.log(res[0]);
+      console.log(res[1]);
+      showOutput(res[1]);
+    })
+    */
+    .then(axios.spread((todos, posts) => {
+      console.log(todos);
+      console.log(posts);
+      showOutput(posts);
+    }))
+    .catch((err) => { console.log(err) });
+    // res[0] is for todo and res[1] is for posts.
 }
 
 // CUSTOM HEADERS
 function customHeaders() {
-  console.log('Custom Headers');
+  const config = {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "sometoken"
+    }
+  }
+
+  axios
+    .post("https://jsonplaceholder.typicode.com/todos", {
+      title: "New added Todo",
+      completed: false
+    }, config)
+    .then((res) => { showOutput(res) })
+    .catch((err) => { console.log(err) });
 }
 
 // TRANSFORMING REQUESTS & RESPONSES
 function transformResponse() {
-  console.log('Transform Response');
+  const options = {
+    method: "post",
+    url: "https://jsonplaceholder.typicode.com/todos",
+    data: {
+      title: "This is new Title"
+    },
+    transformResponse: axios.defaults.transformResponse.concat((data) => {
+      data.title = data.title.toUpperCase();
+      return data;
+    })
+  }
+
+  axios(options).then((res) => { showOutput(res) })
 }
 
 // ERROR HANDLING
 function errorHandling() {
-  console.log('Error Handling');
+  axios
+    .get("https://jsonplaceholder.typicode.com/todoss")
+    .then((res) => { showOutput(res) })
+    .catch((err) => {
+      if (err.response) {
+        // Server responded with a status other than 200 range
+        console.log(err.response.data);
+        console.log(err.response.status);
+        console.log(err.response.headers);
+      } else {
+        console.error(err.message);
+      }
+    });
 }
 
 // CANCEL TOKEN
 function cancelToken() {
-  console.log('Cancel Token');
+  const source = axios.CancelToken.source();
+
+  axios
+    .get("https://jsonplaceholder.typicode.com/todos", {
+      cancelToken: source.token
+    })
+    .then((res) => { showOutput(res) })
+    .catch((thrown) => {
+      if (axios.isCancel(thrown)) {
+        console.log("Req canceled", thrown.message);
+      }
+    });
+  
 }
 
 // INTERCEPTING REQUESTS & RESPONSES
+axios.interceptors.request.use((config) => {
+  console.log(`${config.method.toUpperCase()} req sent to ${config.url} at ${new Date().getTime()}`);
+  return config
+}, (error) => {
+  return Promise.reject(error);
+})
 
 // AXIOS INSTANCES
+const axiosInstance = axios.create({
+  baseURL: "https://jsonplaceholder.typicode.com"
+});
+
+// axiosInstance.get("/comments").then((res) => { showOutput(res) });
 
 // Show output in browser
 function showOutput(res) {
